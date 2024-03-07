@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from singer_sdk import Tap
-from singer_sdk import typing as th  # JSON schema typing helpers
+from singer_sdk import typing as th
 
-# TODO: Import your custom stream types here:
 from tap_clari import streams
 
 
@@ -14,31 +13,28 @@ class TapClari(Tap):
 
     name = "tap-clari"
 
-    # TODO: Update this section with the actual config values you expect:
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "auth_token",
+            "api_key",
             th.StringType,
             required=True,
             secret=True,  # Flag config as protected.
-            description="The token to authenticate against the API service",
+            description="The token to authenticate against the Clari API",
         ),
         th.Property(
-            "project_ids",
+            "time_period",
+            th.StringType,
+            required=False,
+            description="Fiscal Quarter for when you'd like to run your export. Must "
+                        "be passed in as a string (e.g. 'YYYY_QQ'). Defaults to the "
+                        "current quarter.",
+        ),
+        th.Property(
+            "forecast_ids",
             th.ArrayType(th.StringType),
             required=True,
-            description="Project IDs to replicate",
-        ),
-        th.Property(
-            "start_date",
-            th.DateTimeType,
-            description="The earliest record date to sync",
-        ),
-        th.Property(
-            "api_url",
-            th.StringType,
-            default="https://api.mysample.com",
-            description="The url for the API service",
+            description="An array of IDs of the Forecast Tabs you would like to "
+                        "export data from.",
         ),
     ).to_dict()
 
@@ -48,10 +44,10 @@ class TapClari(Tap):
         Returns:
             A list of discovered streams.
         """
-        return [
-            streams.GroupsStream(self),
-            streams.UsersStream(self),
-        ]
+        stream_list: list[streams.ClariStream] = []
+        for forecast_id in self.config.get("forecast_ids"):
+            stream_list.append(streams.ForecastStream(self, forecast_id=forecast_id))
+        return stream_list
 
 
 if __name__ == "__main__":

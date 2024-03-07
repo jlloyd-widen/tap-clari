@@ -2,71 +2,62 @@
 
 from __future__ import annotations
 
-import sys
 import typing as t
 
-from singer_sdk import typing as th  # JSON Schema typing helpers
+from singer_sdk import typing as th
 
 from tap_clari.client import ClariStream
 
-if sys.version_info >= (3, 9):
-    import importlib.resources as importlib_resources
-else:
-    import importlib_resources
 
+class ForecastStream(ClariStream):
+    """Define forecast stream."""
 
-# TODO: Delete this is if not using json files for schema definition
-SCHEMAS_DIR = importlib_resources.files(__package__) / "schemas"
-# TODO: - Override `UsersStream` and `GroupsStream` with your own stream definition.
-#       - Copy-paste as many times as needed to create multiple stream types.
+    def __init__(self, tap, forecast_id: str):
+        super().__init__(
+            tap,
+            path=f"/forecast/{forecast_id}",
+            name=f"{forecast_id}_forecast",
+        )
+        self.forecast_id = forecast_id
 
-
-class UsersStream(ClariStream):
-    """Define custom stream."""
-
-    name = "users"
-    path = "/users"
-    primary_keys: t.ClassVar[list[str]] = ["id"]
+    primary_keys: t.ClassVar[list[str]] = ["timeFrames", "timePeriods"]
     replication_key = None
-    # Optionally, you may also use `schema_filepath` in place of `schema`:
-    # schema_filepath = SCHEMAS_DIR / "users.json"  # noqa: ERA001
     schema = th.PropertiesList(
-        th.Property("name", th.StringType),
-        th.Property(
-            "id",
-            th.StringType,
-            description="The user's system ID",
-        ),
-        th.Property(
-            "age",
-            th.IntegerType,
-            description="The user's age in years",
-        ),
-        th.Property(
-            "email",
-            th.StringType,
-            description="The user's email address",
-        ),
-        th.Property("street", th.StringType),
-        th.Property("city", th.StringType),
-        th.Property(
-            "state",
-            th.StringType,
-            description="State name in ISO 3166-2 format",
-        ),
-        th.Property("zip", th.StringType),
-    ).to_dict()
-
-
-class GroupsStream(ClariStream):
-    """Define custom stream."""
-
-    name = "groups"
-    path = "/groups"
-    primary_keys: t.ClassVar[list[str]] = ["id"]
-    replication_key = "modified"
-    schema = th.PropertiesList(
-        th.Property("name", th.StringType),
-        th.Property("id", th.StringType),
-        th.Property("modified", th.DateTimeType),
+        th.Property("entries", th.ArrayType(th.ObjectType(
+            th.Property("fieldId", th.StringType),
+            th.Property("quotaValue", th.NumberType),
+            th.Property("timeFrameId", th.StringType),
+            th.Property("timePeriodId", th.StringType),
+            th.Property("userId", th.StringType),
+        ))),
+        th.Property("fields", th.ArrayType(th.ObjectType(
+            th.Property("fieldId", th.StringType),
+            th.Property("fieldName", th.StringType),
+            th.Property("fieldType", th.StringType),
+        ))),
+        th.Property("timeFrames", th.ArrayType(th.ObjectType(
+            th.Property("endDate", th.DateType),
+            th.Property("startDate", th.DateType),
+            th.Property("timeFrameId", th.StringType),
+        ))),
+        th.Property("timePeriods", th.ArrayType(th.ObjectType(
+            th.Property("crmId", th.StringType),
+            th.Property("endDate", th.DateType),
+            th.Property("label", th.StringType),
+            th.Property("startDate", th.DateType),
+            th.Property("timePeriodId", th.StringType),
+            th.Property("type", th.StringType),
+            th.Property("year", th.StringType),
+        ))),
+        th.Property("users", th.ArrayType(th.ObjectType(
+            th.Property("crmId", th.StringType),
+            th.Property("email", th.EmailType),
+            th.Property("hierarchyId", th.StringType),
+            th.Property("hierarchyName", th.StringType),
+            th.Property("name", th.StringType),
+            th.Property("parentHierarchyId", th.StringType),
+            th.Property("parentHierarchyName", th.StringType),
+            th.Property("scopeId", th.StringType),
+            th.Property("userId", th.StringType),
+        ))),
     ).to_dict()
