@@ -20,7 +20,12 @@ class ForecastStream(ClariStream):
         )
         self.forecast_id = forecast_id
 
-    primary_keys: t.ClassVar[list[str]] = ["timeFrames", "timePeriods"]
+    primary_keys: t.ClassVar[list[str]] = [
+        "fieldId",
+        "timeFrameId",
+        "timePeriodId",
+        "userId",
+    ]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("entries", th.ArrayType(th.ObjectType(
@@ -29,35 +34,22 @@ class ForecastStream(ClariStream):
             th.Property("timeFrameId", th.StringType),
             th.Property("timePeriodId", th.StringType),
             th.Property("userId", th.StringType),
-        ))),
-        th.Property("fields", th.ArrayType(th.ObjectType(
-            th.Property("fieldId", th.StringType),
             th.Property("fieldName", th.StringType),
-            th.Property("fieldType", th.StringType),
-        ))),
-        th.Property("timeFrames", th.ArrayType(th.ObjectType(
-            th.Property("endDate", th.DateType),
-            th.Property("startDate", th.DateType),
-            th.Property("timeFrameId", th.StringType),
-        ))),
-        th.Property("timePeriods", th.ArrayType(th.ObjectType(
-            th.Property("crmId", th.StringType),
-            th.Property("endDate", th.DateType),
-            th.Property("label", th.StringType),
-            th.Property("startDate", th.DateType),
-            th.Property("timePeriodId", th.StringType),
-            th.Property("type", th.StringType),
+            th.Property("timeFrameEndDate", th.DateType),
+            th.Property("timeFrameStartDate", th.DateType),
+            th.Property("timePeriodCrmId", th.StringType),
+            th.Property("timePeriodEndDate", th.DateType),
+            th.Property("timePeriodLabel", th.StringType),
+            th.Property("timePeriodStartDate", th.DateType),
+            th.Property("timePeriodType", th.StringType),
             th.Property("year", th.StringType),
-        ))),
-        th.Property("users", th.ArrayType(th.ObjectType(
-            th.Property("crmId", th.StringType),
-            th.Property("email", th.EmailType),
+            th.Property("userCrmId", th.StringType),
+            th.Property("userEmail", th.EmailType),
             th.Property("hierarchyId", th.StringType),
             th.Property("hierarchyName", th.StringType),
-            th.Property("name", th.StringType),
+            th.Property("userName", th.StringType),
             th.Property("parentHierarchyId", th.StringType),
             th.Property("parentHierarchyName", th.StringType),
             th.Property("scopeId", th.StringType),
-            th.Property("userId", th.StringType),
         ))),
     ).to_dict()
