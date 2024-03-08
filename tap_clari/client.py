@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import typing as t
 from typing import Any, Callable
 
 import requests
 from singer_sdk.authenticators import APIKeyAuthenticator
+from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk.streams import RESTStream
 
 _Auth = Callable[[requests.PreparedRequest], requests.PreparedRequest]
@@ -74,24 +76,22 @@ class ClariStream(RESTStream):
             "exportFormat": "JSON",
         }
 
-    def post_process(
-            self,
-            row: dict,
-            context: dict | None = None,  # noqa: ARG002
-    ) -> dict | None:
-        """Append or transform raw data to match expected structure.
+    def parse_response(self, response: requests.Response) -> t.Iterable[dict]:
+        """Parse the response and return an iterator of result records.
 
         Args:
-            row: Individual record in the stream.
-            context: Stream partition or context dictionary.
+            response: A raw :class:`requests.Response`
 
-        Returns:
-            The resulting record dict, or `None` if the record should be excluded.
+        Yields:
+            One item for every item found in the response.
         """
-        return flatten_record(row)
+        record = extract_jsonpath(self.records_jsonpath, input=response.json())
+        yield from flatten_record(next(record))
 
 
-def get_list_item_values(source_list: list, target_keys: list[str], search_pair: dict) -> dict:
+def get_list_item_values(
+    source_list: list, target_keys: list[str], search_pair: dict
+) -> dict:
     """Return target items from a dict with a specific key value pair from an array of dicts."""
     if len(search_pair) > 1:
         raise ValueError("pair must be a dictionary with a single key value pair")
@@ -100,7 +100,7 @@ def get_list_item_values(source_list: list, target_keys: list[str], search_pair:
         return {k: v for k, v in target_dict.items() if k in target_keys}
 
 
-def flatten_record(row: dict) -> dict:
+def flatten_record(row: dict) -> list:
     """Flatten a nested dictionary."""
     entries = row.get("entries", [])
     fields = row.get("fields", [])
@@ -111,19 +111,15 @@ def flatten_record(row: dict) -> dict:
     new_entries = []
     for entry in entries:
         field = get_list_item_values(
-            fields,
-            ["fieldName"],
-            {"fieldId": entry["fieldId"]}
+            fields, ["fieldName"], {"fieldId": entry["fieldId"]}
         )
         time_frame = get_list_item_values(
-            time_frames,
-            ["startDate", "endDate"],
-            {"timeFrameId": entry["timeFrameId"]}
+            time_frames, ["startDate", "endDate"], {"timeFrameId": entry["timeFrameId"]}
         )
         time_period = get_list_item_values(
             time_periods,
             ["type", "label", "year", "startDate", "endDate", "crmId"],
-            {"timePeriodId": entry["timePeriodId"]}
+            {"timePeriodId": entry["timePeriodId"]},
         )
         user = get_list_item_values(
             users,
@@ -137,7 +133,7 @@ def flatten_record(row: dict) -> dict:
                 "parentHierarchyId",
                 "parentHierarchyName",
             ],
-            {"userId": entry["userId"]}
+            {"userId": entry["userId"]},
         )
 
         # prevent key clashes
@@ -155,4 +151,4 @@ def flatten_record(row: dict) -> dict:
         # merge dictionaries
         new_entries.append({**entry, **field, **time_frame, **time_period, **user})
 
-    return {"entries": new_entries}
+    return new_entries

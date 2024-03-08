@@ -26,15 +26,15 @@ class TapClari(Tap):
             th.StringType,
             required=False,
             description="Fiscal Quarter for when you'd like to run your export. Must "
-                        "be passed in as a string (e.g. 'YYYY_QQ'). Defaults to the "
-                        "current quarter.",
+            "be passed in as a string (e.g. 'YYYY_QQ'). Defaults to the "
+            "current quarter.",
         ),
         th.Property(
             "forecast_ids",
             th.ArrayType(th.StringType),
             required=True,
             description="An array of IDs of the Forecast Tabs you would like to "
-                        "export data from.",
+            "export data from.",
         ),
     ).to_dict()
 
