@@ -26,6 +26,7 @@ class ForecastStream(ClariStream):
         th.Property("entries", th.ArrayType(th.ObjectType(
             th.Property("fieldId", th.StringType),
             th.Property("quotaValue", th.NumberType),
+            th.Property("forecastValue", th.NumberType),
             th.Property("timeFrameId", th.StringType),
             th.Property("timePeriodId", th.StringType),
             th.Property("userId", th.StringType),
