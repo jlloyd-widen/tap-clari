@@ -20,12 +20,7 @@ class ForecastStream(ClariStream):
         )
         self.forecast_id = forecast_id
 
-    primary_keys: t.ClassVar[list[str]] = [
-        "fieldId",
-        "timeFrameId",
-        "timePeriodId",
-        "userId",
-    ]
+    primary_keys: t.ClassVar[list[str]] = ["entries"]
     replication_key = None
     schema = th.PropertiesList(
         th.Property("entries", th.ArrayType(th.ObjectType(
