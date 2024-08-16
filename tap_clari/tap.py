@@ -32,9 +32,17 @@ class TapClari(Tap):
         th.Property(
             "forecast_ids",
             th.ArrayType(th.StringType),
-            required=True,
+            required=False,
+            default=[],
             description="An array of IDs of the Forecast Tabs you would like to "
             "export data from.",
+        ),
+        th.Property(
+            "opp_ids",
+            th.ArrayType(th.StringType),
+            required=False,
+            default=[],
+            description="An array of IDs of the opportunities for extraction.",
         ),
     ).to_dict()
 
@@ -47,6 +55,7 @@ class TapClari(Tap):
         stream_list: list[streams.ClariStream] = []
         for forecast_id in self.config.get("forecast_ids"):
             stream_list.append(streams.ForecastStream(self, forecast_id=forecast_id))
+        stream_list.append(streams.OpportunityStream(self))
         return stream_list
 
 

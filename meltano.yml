@@ -22,6 +22,11 @@ plugins:
       kind: string
     - name: forecast_ids
       kind: array
+    - name: opp_ids
+      kind: array
+    select:
+      - '*.*'
+      - '!opportunity.*'
   loaders:
   - name: target-jsonl
     variant: andyh1203

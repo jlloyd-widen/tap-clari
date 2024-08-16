@@ -1,49 +1,71 @@
 """Tests standard tap features using the built-in SDK tests library."""
+from unittest.mock import Mock
 
-from tap_clari.client import get_list_item_values, flatten_record
+import pytest
 
-# SAMPLE_CONFIG = {
-#     "start_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
-#     # TODO: Initialize minimal tap config
-# }
-#
-#
+from tap_clari.streams import ForecastStream, OpportunityStream
+
+CONFIG = {
+    "api_key": "test",
+    "forecast_ids": ["1"],
+    "opp_ids": ["opp_id_1", "opp_id_2"],
+}
+
+
 # # Run standard built-in tap tests from the SDK:
 # TestTapClari = get_tap_test_class(
 #     tap_class=TapClari,
-#     config=SAMPLE_CONFIG,
+#     config=CONFIG,
 # )
 
 
+# fs = ForecastStream(tap=TestTapClari, forecast_id="1")
 sl = [
     {"id": 1, "name": "one", "other": "foo"},
     {"id": 2, "name": "two", "other": "bar"},
     {"id": 3, "name": "three", "other": "baz"},
 ]
 
-def test_get_list_item_values_multiple():
+
+@pytest.fixture
+def forecast_stream():
+    mock_tap = Mock()
+    mock_tap.logger = Mock()
+    mock_tap.config = CONFIG
+    return ForecastStream(tap=mock_tap, forecast_id="test_forecast_stream")
+
+
+@pytest.fixture
+def opportunity_stream():
+    mock_tap = Mock()
+    mock_tap.logger = Mock()
+    mock_tap.config = CONFIG
+    return OpportunityStream(tap=mock_tap)
+
+
+def test_get_list_item_values_multiple(forecast_stream):
     """Test the get_list_item_values function."""
-    res = get_list_item_values(sl, ["name", "other"], {"id": 1})
+    res = forecast_stream.get_list_item_values(sl, ["name", "other"], {"id": 1})
     assert res == {"name": "one", "other": "foo"}
 
 
-def test_get_list_item_values_one():
+def test_get_list_item_values_one(forecast_stream):
     """Test the get_list_item_values function."""
-    res = get_list_item_values(sl, ["name"], {"id": 1})
+    res = forecast_stream.get_list_item_values(sl, ["name"], {"id": 1})
     assert res == {"name": "one"}
 
 
-def test_get_list_item_values_raise():
+def test_get_list_item_values_raise(forecast_stream):
     """Test that oversized search_pair raise an ValueError."""
     try:
-        get_list_item_values(sl, ["name"], {"id": 1, "other": "foo"})
+        forecast_stream.get_list_item_values(sl, ["name"], {"id": 1, "other": "foo"})
     except ValueError:
         pass
     else:
         assert False, "Expected ValueError"
 
 
-def test_flatten_record():
+def test_forecast_flatten_record(forecast_stream):
     """Test the flatten_record function."""
     record = {
         "entries": [
@@ -100,7 +122,7 @@ def test_flatten_record():
                         'timeFrameId': 'TF:2024-03-01'}],
 
     }
-    res = flatten_record(record)
+    res = forecast_stream.flatten_record(record)
     assert res == [
         {
             'fieldId': 'field_id_1',
