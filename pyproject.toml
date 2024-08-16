@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acquia-tap-clari"
-version = "0.0.1"
+version = "0.0.2"
 description = "`tap-clari` is a Singer tap for Clari, built with the Meltano Singer SDK."
 readme = "README.md"
 authors = ["Josh Lloyd <josh.lloyd@acquia.com>"]
