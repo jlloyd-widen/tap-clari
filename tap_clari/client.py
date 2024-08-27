@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from http import HTTPStatus
 from typing import Any, Callable
 
 import requests
 from singer_sdk.authenticators import APIKeyAuthenticator
+from singer_sdk.exceptions import RetriableAPIError, FatalAPIError
 from singer_sdk.streams import RESTStream
 
 _Auth = Callable[[requests.PreparedRequest], requests.PreparedRequest]
@@ -73,3 +75,20 @@ class ClariStream(RESTStream):
             # "currency": "USD",
             "exportFormat": "JSON",
         }
+
+    def validate_response(self, response: requests.Response) -> None:
+        """Validate http response."""
+        if (
+                response.status_code in self.extra_retry_statuses
+                or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+        ):
+            msg = self.response_error_message(response)
+            raise RetriableAPIError(msg, response)
+
+        if (
+                HTTPStatus.BAD_REQUEST
+                <= response.status_code
+                < HTTPStatus.INTERNAL_SERVER_ERROR
+        ):
+            msg = self.response_error_message(response) + f". URL: {response.url}"
+            raise FatalAPIError(msg)
